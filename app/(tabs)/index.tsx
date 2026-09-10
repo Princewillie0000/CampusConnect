@@ -1,98 +1,90 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import type { NewsFeed } from "../../types/NewsFeed";
+import { NewsFeedCard } from "@/components/NewsFeed";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { fetchAllActivities } from "@/services/activityService";
+import { useEffect, useState } from "react";
+import {Activity} from "../../types/ActivityData"
+import { ActivityCard } from "@/components/ActivityCard";
 
-export default function HomeScreen() {
+
+const HomeScreen = () => {
+
+    const [activities, setActivities] = useState<Activity[] | null>(null)
+
+    const allActivities = async ()=>{
+        const result = await fetchAllActivities()
+        setActivities(result)
+        console.log(result);
+        
+    }
+
+  const newsFeeds: NewsFeed[] = [
+    {
+      id: "1",
+      image: "https://example.com/career-fair.jpg",
+      title: "Campus Career Fair",
+      description:
+        "Meet employers, discover internship opportunities, and build your professional network.",
+      timestamp: "2 hours ago",
+    },
+    {
+      id: "2",
+      image: "https://example.com/study-group.jpg",
+      title: "New Study Groups Available",
+      description:
+        "Join other students and collaborate on assignments, projects, and exam preparation.",
+      timestamp: "5 hours ago",
+    },
+    {
+      id: "3",
+      image: "https://example.com/music-event.jpg",
+      title: "Live Music on Campus",
+      description:
+        "Come enjoy live performances and connect with other students this Friday evening.",
+      timestamp: "Yesterday",
+    },
+  ];
+
+  useEffect(()=>{
+    allActivities()
+  }, [])
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.headingText}>
+        Connect with friends and explore events and groups.
+      </Text>
+      
+      <View>
+        <Text>Recent Campus Activity</Text>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <FlatList
+        data={activities}
+        renderItem={({ item }) => <ActivityCard item={item} />}
+        keyExtractor={(item) => item.id}
+      />
+
+    </View>
   );
-}
+};
+
+export default HomeScreen;
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  headingText: {
+    color: "#2e1065",
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    margin: 20,
+    textTransform: "uppercase",
   },
 });
