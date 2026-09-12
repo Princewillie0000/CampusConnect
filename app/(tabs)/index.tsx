@@ -12,17 +12,23 @@ import { fetchAllActivities } from "@/services/activityService";
 import { useEffect, useState } from "react";
 import {Activity} from "../../types/ActivityData"
 import { ActivityCard } from "@/components/ActivityCard";
-
+import { useRouter } from "expo-router";
 
 const HomeScreen = () => {
 
     const [activities, setActivities] = useState<Activity[] | null>(null)
+    const router = useRouter()
 
     const allActivities = async ()=>{
         const result = await fetchAllActivities()
         setActivities(result)
         console.log(result);
         
+    }
+
+
+    const exploreEvents = ()=>{
+        router.push("/(tabs)/events")
     }
 
   const newsFeeds: NewsFeed[] = [
@@ -71,6 +77,24 @@ const HomeScreen = () => {
         renderItem={({ item }) => <ActivityCard item={item} />}
         keyExtractor={(item) => item.id}
       />
+
+      <View>
+        <TouchableOpacity 
+         style={{
+            padding: 15,
+            margin: 15,
+            borderRadius: 15,
+            backgroundColor: "#641f1f",
+            
+           
+          }}
+        onPress={exploreEvents}
+        > 
+        <Text style={{color: "#ecf0f1", fontWeight: 700, textAlign: "center"}}>
+            Explore events
+        </Text>
+         </TouchableOpacity>
+      </View>
 
     </View>
   );
