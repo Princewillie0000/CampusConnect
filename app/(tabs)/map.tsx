@@ -64,7 +64,7 @@ const MapScreen = () => {
         longitudeDelta: 0.01
     }
 
-      // animateToRegion → This moves the viewport programmatically
+      //animateToRegion → This moves the viewport programmatically
     mapRef.current?.animateToRegion(userRegion)
     setLocation(userCurrentLocation);
 
@@ -73,8 +73,6 @@ const MapScreen = () => {
     } catch (error: any) {
         Alert.alert("Cannot get user location", error.message)
     }
-   
-    
   }
 
   const permissionToRequestUserLocation = async () => {
@@ -123,6 +121,7 @@ const MapScreen = () => {
     longitude: event.longitude,
   }));
 
+  // all co-ordinates...
   const allCoordinates = [...locationCoordinates, ...eventCoordinates];
 
   function showEventsAndLocaionCoordinates() {
@@ -197,6 +196,8 @@ const MapScreen = () => {
         </Text>
       </TouchableOpacity>
        </View>
+
+
       <MapView
         ref={mapRef}
         showsUserLocation
