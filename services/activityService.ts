@@ -1,4 +1,6 @@
 import {Activity} from "../types/ActivityData"
+import {doc, collection, setDoc, deleteDoc, serverTimestamp, getDoc} from "firebase/firestore"
+import { db } from "./firebaseConfig";
 
 const activities: Activity[] = [
     {
@@ -57,4 +59,38 @@ const activities: Activity[] = [
 
 export function fetchAllActivities(){
         return activities;
+}
+
+export async function createActivity(activityId: string){
+    const activityRef = doc(collection(db, "activities"), activityId)
+    await setDoc(activityRef, {activityId})
+}
+
+
+export async function likeActivity(activityId: string, userId:string){
+    const likeRef = doc(db, "activities", activityId, "likes", userId)
+        await setDoc(likeRef, { userId, createdAt: serverTimestamp()})
+}
+
+
+export async function unlikeActivity(activityId: string, userId: string){
+        const unlikeRef = doc(db, "activities", activityId, "likes", userId)
+         await deleteDoc(unlikeRef)
+}
+
+
+export async function hasUserLikedActivity(activityId: string, userId: string) {
+        const checkLikeRef = doc(db, "activities", activityId, "likes", userId)
+        const getRef = await getDoc(checkLikeRef)
+
+        // if (getRef.exists()){
+        //     return true
+        // } else {
+        //     return false
+        // }
+
+        // OR 
+
+        return getRef.exists()
+    
 }

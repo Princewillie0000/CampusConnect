@@ -1,21 +1,89 @@
 import {
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-// import type { NewsFeed } from "../../types/NewsFeed";
-// import { NewsFeedCard } from "@/components/NewsFeed";
 
-import { fetchAllActivities } from "@/services/activityService";
-import { useEffect, useState } from "react";
+import {
+  fetchAllActivities,
+  hasUserLikedActivity,
+  likeActivity,
+  unlikeActivity,
+} from "@/services/activityService";
+import { use, useEffect, useState, useRef, act } from "react";
 import { Activity } from "../../types/ActivityData";
 import { ActivityCard } from "@/components/ActivityCard";
 import { useRouter } from "expo-router";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { fireAuth } from "@/services/firebaseConfig";
+
+interface LikedStates {
+  [activityId: string]: boolean;
+}
 
 const HomeScreen = () => {
   const [activities, setActivities] = useState<Activity[] | null>(null);
+  const [likedStates, setLikedStates] = useState<LikedStates>({});
+
+  const lastTap = useRef<number | null>(null);
+
+  const likedState = async (activityId: string) => {
+    const user = fireAuth.currentUser;
+    if (!user) return;
+    const result = await hasUserLikedActivity(activityId, user.uid);
+    setLikedStates((prevState) => ({
+      ...prevState,
+      [activityId]: result,
+    }));
+  };
+
+  const handleActivityPress = async (activityId: string) => {
+    // get current time
+    const now = Date.now();
+
+    // check whether this happened within ~300ms of the previous tap
+    const timePressed = lastTap.current !== null && now - lastTap.current < 300;
+    lastTap.current = timePressed ? null : now;
+    // if yes:
+    if (!timePressed) return;
+
+    const user = fireAuth.currentUser;
+    if (!user) return;
+
+    const isPostLiked = await hasUserLikedActivity(activityId, user.uid);
+
+    if (isPostLiked) {
+      await unlikeActivity(activityId, user.uid);
+      setLikedStates((prev) => ({
+        ...prev,
+        [activityId]: false,
+      }));
+    } else {
+      await likeActivity(activityId, user.uid);
+      setLikedStates((prev) => ({
+        ...prev,
+        [activityId]: true,
+      }));
+
+      return;
+    }
+    //   get current Firebase user
+    //   check likedStates[activityId]
+    //   if false → likeActivity()
+    //   if true  → unlikeActivity()
+    //   update likedStates
+  };
+
+  // USE EFFECT
+  useEffect(() => {
+    activities?.forEach((activity) => {
+      likedState(activity.id);
+    });
+  }, [activities]);
+
   const router = useRouter();
 
   const allActivities = async () => {
@@ -28,41 +96,29 @@ const HomeScreen = () => {
     router.push("/(tabs)/events");
   };
 
-  //   const newsFeeds: NewsFeed[] = [
-  //     {
-  //       id: "1",
-  //       image: "https://example.com/career-fair.jpg",
-  //       title: "Campus Career Fair",
-  //       description:
-  //         "Meet employers, discover internship opportunities, and build your professional network.",
-  //       timestamp: "2 hours ago",
-  //     },
-  //     {
-  //       id: "2",
-  //       image: "https://example.com/study-group.jpg",
-  //       title: "New Study Groups Available",
-  //       description:
-  //         "Join other students and collaborate on assignments, projects, and exam preparation.",
-  //       timestamp: "5 hours ago",
-  //     },
-  //     {
-  //       id: "3",
-  //       image: "https://example.com/music-event.jpg",
-  //       title: "Live Music on Campus",
-  //       description:
-  //         "Come enjoy live performances and connect with other students this Friday evening.",
-  //       timestamp: "Yesterday",
-  //     },
-  //   ];
+  const createLike = async () => {
+    const user = fireAuth.currentUser;
+    console.log("user : ", user?.uid);
+
+    if (!user) return;
+    const activityId = activities?.[0]?.id;
+    console.log("Activity 1: ", activityId);
+
+    if (!activityId) return;
+
+    try {
+      await likeActivity(activityId, user.uid);
+    } catch (error: any) {
+      console.log("LIKE ERROR: ", error);
+    }
+  };
 
   useEffect(() => {
     allActivities();
+    createLike();
   }, []);
 
   return (
-   
-
-  
     <View style={styles.container}>
       <Text style={styles.headingText}>
         Connect with friends and explore events and groups.
@@ -74,9 +130,25 @@ const HomeScreen = () => {
 
       <FlatList
         data={activities}
-        renderItem={({ item }) => <ActivityCard item={item} />}
+        renderItem={({ item }) => (
+          <View>
+            <Pressable onPress={() => handleActivityPress(item.id)}>
+              <ActivityCard item={item} />
+            </Pressable>
+
+            <View style={styles.likesAndCommentIcon}>
+              <Ionicons
+                name={likedStates[item.id] ? "heart" : "heart-outline"}
+                size={24}
+                color={likedStates[item.id] ? "red" : "black"}
+              />
+
+              <Ionicons name="chatbubble-outline" size={22} color="black" />
+            </View>
+          </View>
+        )}
         keyExtractor={(item) => item.id}
-        contentContainerStyle= {styles.activityList}
+        contentContainerStyle={styles.activityList}
       />
 
       <View>
@@ -85,7 +157,6 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
     </View>
-    
   );
 };
 
@@ -114,8 +185,7 @@ const styles = StyleSheet.create({
   activityList: {
     // flex: 1,
     backgroundColor: "#dcdde1",
-    padding: 20
-
+    padding: 20,
   },
 
   exploreButton: {
@@ -129,5 +199,10 @@ const styles = StyleSheet.create({
     color: "#ecf0f1",
     fontWeight: "700",
     textAlign: "center",
+  },
+
+  likesAndCommentIcon: {
+    flexDirection: "row",
+    gap: 15,
   },
 });
