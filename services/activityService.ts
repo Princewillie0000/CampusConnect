@@ -1,5 +1,5 @@
 import {Activity} from "../types/ActivityData"
-import {doc, collection, setDoc, deleteDoc, serverTimestamp, getDoc} from "firebase/firestore"
+import {doc, collection, setDoc, deleteDoc, serverTimestamp, getDocs, addDoc} from "firebase/firestore"
 import { db } from "./firebaseConfig";
 
 const activities: Activity[] = [
@@ -93,4 +93,26 @@ export async function hasUserLikedActivity(activityId: string, userId: string) {
 
         return getRef.exists()
     
+}
+
+
+export async function createComment(activityId: string, text:string, userId:string){
+    const commentRef = await addDoc(collection(db, "activities", activityId, "comments"), {
+        text,
+        userId,
+        createdAt: serverTimestamp()
+    })
+    return commentRef;
+}
+
+
+export async function fetchComments(activityId: string){
+    const checkCommentsRef = collection(db, "activities", activityId, "comments")
+    const snapShot = await getDocs(checkCommentsRef)
+  
+    const comments = snapShot.docs.map((doc)=> ({
+        id: doc.id,
+        ...doc.data()
+    }))
+    return comments;
 }
