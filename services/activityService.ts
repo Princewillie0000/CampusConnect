@@ -1,5 +1,5 @@
 import {Activity} from "../types/ActivityData"
-import {doc, collection, setDoc, deleteDoc, serverTimestamp, getDocs, addDoc} from "firebase/firestore"
+import {doc, collection, setDoc, deleteDoc, serverTimestamp, getDocs, addDoc, getDoc} from "firebase/firestore"
 import { db } from "./firebaseConfig";
 
 const activities: Activity[] = [
@@ -112,7 +112,9 @@ export async function fetchComments(activityId: string){
   
     const comments = snapShot.docs.map((doc)=> ({
         id: doc.id,
-        ...doc.data()
+        userId: doc.data().userId,
+        text: doc.data().text,
+        createdAt: doc.data().createdAt
     }))
     return comments;
 }
